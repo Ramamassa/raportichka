@@ -28,7 +28,8 @@ export default async function handler(req, res) {
     try {
       const data = await getState();
       return sendJson(res, 200, data);
-    } catch {
+    } catch (err) {
+      console.error('State read error:', err);
       return sendJson(res, 500, { error: 'Не удалось загрузить данные из хранилища.' });
     }
   }
@@ -50,9 +51,10 @@ export default async function handler(req, res) {
         });
       }
       return sendJson(res, 200, { revision: result.revision });
-    } catch {
+    } catch (err) {
+      console.error('State save error:', err);
       return sendJson(res, 400, {
-        error: 'Не удалось сохранить данные. Проверьте формат данных.'
+        error: err.message || 'Ошибка сохранения данных'
       });
     }
   }

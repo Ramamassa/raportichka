@@ -90,7 +90,8 @@ test('Storage: Upstash Redis REST API protocol integration', async () => {
 
   global.fetch = async (url, options) => {
     calls.push({ url, options });
-    if (url.includes('/mget/')) {
+    const payload = options.body ? JSON.parse(options.body) : [];
+    if (payload[0] === 'MGET' || url.includes('/mget/')) {
       return {
         ok: true,
         json: async () => ({
@@ -98,9 +99,8 @@ test('Storage: Upstash Redis REST API protocol integration', async () => {
         })
       };
     }
-    if (url.includes('/eval')) {
-      const payload = JSON.parse(options.body);
-      const expectedRev = payload[4];
+    if (payload[0] === 'EVAL' || url.includes('/eval')) {
+      const expectedRev = payload[0] === 'EVAL' ? payload[5] : payload[4];
       if (expectedRev === '5') {
         return { ok: true, json: async () => ({ result: '6' }) };
       }

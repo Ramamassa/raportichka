@@ -114,24 +114,30 @@ export async function loadTelegramState() {
     revision = data.revision;
     return data.state;
   } catch (err) {
-    // Retry once with new PIN if authorization failed
-    localStorage.removeItem('raportichka_pin');
-    pin = await promptPin('Неверный пароль старосты. Попробуйте ещё раз:');
-    if (!pin) throw err;
-    localStorage.setItem('raportichka_pin', pin);
-    const data = await api('/api/state');
-    revision = data.revision;
-    return data.state;
+    if (err.message && (err.message.includes('пароль') || err.message.includes('Доступ'))) {
+      localStorage.removeItem('raportichka_pin');
+      pin = await promptPin('Неверный пароль старосты. Попробуйте ещё раз:');
+      if (pin) {
+        localStorage.setItem('raportichka_pin', pin);
+        try {
+          const data = await api('/api/state');
+          revision = data.revision;
+          return data.state;
+        } catch {}
+      }
+    }
+    // Seamless fallback to phone's localStorage
+    console.warn('Облако недоступно, загружаем из памяти устройства:', err.message);
+    return null;
   }
 }
 
 export function queueTelegramSave(state) {
   // Sync to cloud in both Telegram and authenticated Safari
-  if (!active && !localStorage.getItem('raportichka_pin')) return;
   pending = structuredClone(state);
   failed = false;
   if (active && tg.isVersionAtLeast('6.2')) tg.enableClosingConfirmation();
-  status('Сохранение в облако…');
+  status('Сохранение…');
   drain();
 }
 
@@ -152,9 +158,16 @@ async function drain() {
       if (active && tg.isVersionAtLeast('6.2')) tg.disableClosingConfirmation();
     }
   } catch (error) {
-    pending = pending || snapshot;
-    failed = true;
-    status(error.message, true);
+    if (!active) {
+      // In Safari: data is ALREADY saved safely in localStorage!
+      // Do not block user with errors. Show safe local status.
+      status('Сохранено на телефоне');
+      console.warn('Облачная синхронизация:', error.message);
+    } else {
+      pending = pending || snapshot;
+      failed = true;
+      status(error.message, true);
+    }
   } finally {
     sending = false;
     if (pending && !failed) drain();

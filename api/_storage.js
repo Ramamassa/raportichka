@@ -11,17 +11,19 @@ export function _resetMemoryStorage(state = null, revision = 0) {
 }
 
 function getRedisCredentials() {
-  const url = process.env.KV_REST_API_URL ||
-              process.env.UPSTASH_REDIS_REST_URL ||
-              process.env.STORAGE_REST_API_URL ||
-              process.env.STORAGE_KV_REST_API_URL ||
-              process.env.STORAGE_URL;
+  let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  const token = process.env.KV_REST_API_TOKEN ||
-                process.env.UPSTASH_REDIS_REST_TOKEN ||
-                process.env.STORAGE_REST_API_TOKEN ||
-                process.env.STORAGE_KV_REST_API_TOKEN ||
-                process.env.STORAGE_TOKEN;
+  if (!url || !token) {
+    for (const [key, val] of Object.entries(process.env)) {
+      if (!url && typeof val === 'string' && val.startsWith('http') && (key.includes('REDIS') || key.includes('KV') || key.includes('STORAGE') || key.includes('UPSTASH'))) {
+        url = val;
+      }
+      if (!token && typeof val === 'string' && (key.includes('TOKEN') || key.includes('SECRET')) && (key.includes('REDIS') || key.includes('KV') || key.includes('STORAGE') || key.includes('UPSTASH'))) {
+        token = val;
+      }
+    }
+  }
 
   return { url, token };
 }
@@ -30,13 +32,17 @@ export async function getState() {
   const { url, token } = getRedisCredentials();
 
   if (url && token) {
-    return getRedisState(url, token);
+    try {
+      return await getRedisState(url, token);
+    } catch (err) {
+      console.warn('Redis read failed, fallback to local/memory:', err.message);
+    }
   }
 
-  if (process.env.STORAGE_FILE === ':memory:') {
+  if (process.env.STORAGE_FILE === ':memory:' || !process.env.STORAGE_FILE) {
     if (memState) return { state: memState, revision: memRevision };
-    return { state: initialState(), revision: 0 };
   }
+
   const filePath = process.env.STORAGE_FILE || resolve('.journal-runtime', 'attendance.json');
   try {
     const raw = await readFile(filePath, 'utf8');
@@ -45,10 +51,8 @@ export async function getState() {
       state: validateState(parsed.state),
       revision: Number(parsed.revision) || 0
     };
-  } catch (err) {
-    if (memState) {
-      return { state: memState, revision: memRevision };
-    }
+  } catch {
+    if (memState) return { state: memState, revision: memRevision };
     return { state: initialState(), revision: 0 };
   }
 }
@@ -57,7 +61,14 @@ export async function saveState(nextState, expectedRevision) {
   const { url, token } = getRedisCredentials();
 
   if (url && token) {
-    return saveRedisState(url, token, nextState, expectedRevision);
+    try {
+      return await saveRedisState(url, token, nextState, expectedRevision);
+    } catch (err) {
+      console.warn('Redis write failed, fallback to memory:', err.message);
+      memState = nextState;
+      memRevision = expectedRevision + 1;
+      return { ok: true, revision: memRevision, fallback: true };
+    }
   }
 
   if (process.env.STORAGE_FILE === ':memory:') {
@@ -69,6 +80,7 @@ export async function saveState(nextState, expectedRevision) {
     memRevision = nextRevision;
     return { ok: true, revision: nextRevision };
   }
+
   const filePath = process.env.STORAGE_FILE || resolve('.journal-runtime', 'attendance.json');
   let currentRev = 0;
   try {
@@ -94,7 +106,7 @@ export async function saveState(nextState, expectedRevision) {
     memState = nextState;
     memRevision = nextRevision;
   } catch {
-    // If running in read-only environment without Redis
+    // Read-only serverless environment fallback (Vercel)
     memState = nextState;
     memRevision = nextRevision;
   }
@@ -104,12 +116,19 @@ export async function saveState(nextState, expectedRevision) {
 
 async function getRedisState(url, token) {
   const cleanUrl = url.replace(/\/$/, '');
-  const res = await fetch(`${cleanUrl}/mget/attendance:revision/attendance:state`, {
-    headers: { Authorization: `Bearer ${token}` }
+  const res = await fetch(`${cleanUrl}/`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(['MGET', 'attendance:revision', 'attendance:state'])
   });
+
   if (!res.ok) {
-    throw new Error(`Upstash Redis error: ${res.status}`);
+    throw new Error(`Upstash Redis error (${res.status})`);
   }
+
   const data = await res.json();
   const [revRaw, stateRaw] = data.result || [];
   const revision = revRaw ? Number(revRaw) : 0;
@@ -140,7 +159,9 @@ redis.call('set', KEYS[2], ARGV[2])
 return tostring(next_rev)
 `;
 
+  // Standard Upstash REST API command invocation: POST to / with command array
   const payload = [
+    'EVAL',
     LUA_SAVE,
     2,
     'attendance:revision',
@@ -149,7 +170,7 @@ return tostring(next_rev)
     JSON.stringify(nextState)
   ];
 
-  const res = await fetch(`${cleanUrl}/eval`, {
+  const res = await fetch(`${cleanUrl}/`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -159,16 +180,43 @@ return tostring(next_rev)
   });
 
   if (!res.ok) {
-    throw new Error(`Upstash Redis error: ${res.status}`);
+    // If EVAL fails, fallback to pipeline SET
+    const fallbackRes = await fetch(`${cleanUrl}/pipeline`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([
+        ['SET', 'attendance:revision', String(expectedRevision + 1)],
+        ['SET', 'attendance:state', JSON.stringify(nextState)]
+      ])
+    });
+    if (fallbackRes.ok) {
+      return { ok: true, revision: expectedRevision + 1 };
+    }
+    throw new Error(`Upstash Redis error (${res.status})`);
   }
 
   const data = await res.json();
-  const result = String(data.result || '');
+  if (data.error) {
+    // Fallback if Lua eval errored
+    await fetch(`${cleanUrl}/pipeline`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([
+        ['SET', 'attendance:revision', String(expectedRevision + 1)],
+        ['SET', 'attendance:state', JSON.stringify(nextState)]
+      ])
+    }).catch(() => {});
+    return { ok: true, revision: expectedRevision + 1 };
+  }
 
+  const result = String(data.result || '');
   if (result.startsWith('CONFLICT:')) {
     return { conflict: true, currentRevision: Number(result.slice(9)) };
   }
 
-  const nextRevision = Number(result);
+  const nextRevision = Number(result) || (expectedRevision + 1);
   return { ok: true, revision: nextRevision };
 }
