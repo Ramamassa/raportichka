@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html><head>
+
+
+<title>Журнал — отметки группы</title>
+<style>
+*{box-sizing:border-box}
+:root{font-family:Georgia,serif;font-size:14px;color-scheme:dark}
+body{margin:0}
+button,input,textarea{font:inherit}
+button,label,a{-webkit-tap-highlight-color:transparent}
+button{cursor:pointer}
+.state{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden}
+.app{--bg:#211c18;--surface:#2b241f;--raised:#382f27;--hover:#44392f;--border:#514438;--ink:#f1e7d8;--muted:#b9a997;--accent:#dec18b;--green:#afbd96;--green-bg:#303528;--red:#e0aa95;--red-bg:#3c2b25;--red-border:#84604e;--primary:#dec18b;--primary-edge:#ebd3a6;--primary-ink:#30271f;--shadow:#15110e;--weekend:#332b24;--radius:8px;--space:24px;min-height:100vh;background:var(--bg);color:var(--ink);padding-bottom:calc(116px + env(safe-area-inset-bottom,0px))}
+#light:checked~.app{--bg:#f5efe5;--surface:#fffaf2;--raised:#eee4d5;--hover:#e5d8c5;--border:#d5c5b1;--ink:#3b3027;--muted:#796957;--accent:#886638;--green:#5e704c;--green-bg:#e8eddc;--red:#9b5942;--red-bg:#f7e7dd;--red-border:#cba08b;--primary:#886638;--primary-edge:#76562d;--primary-ink:#fffaf2;--shadow:#d9cbb8;--weekend:#eee5d8;color-scheme:light}
+svg{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.topbar{border-bottom:1px solid var(--border);background:var(--surface)}
+.header{max-width:1184px;margin:auto;min-height:78px;padding:16px 32px;display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:11px;font-size:19px;font-weight:750;letter-spacing:-.6px}
+.brandmark{width:32px;height:34px;color:var(--accent)}
+.brandmark svg{width:32px;height:34px}
+.group-label{border-left:1px solid var(--border);padding-left:24px;color:var(--muted);font-size:13px}
+.group-label strong{color:var(--ink);font-weight:650}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:18px}
+.local{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.local svg{width:15px;height:15px}
+.theme{height:34px;width:36px;display:grid;place-items:center}
+.sun{display:none}
+#light:checked~.app .sun{display:block}
+#light:checked~.app .moon{display:none}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);border-radius:6px;background:var(--raised);color:var(--ink);font-weight:650;font-size:12px;min-height:36px;padding:8px 13px;box-shadow:inset 0 1px 0 #ffffff0b,0 2px 0 var(--shadow),0 3px 5px #00000018;transition:background .12s,transform .1s,box-shadow .1s;text-decoration:none;user-select:none;white-space:nowrap}
+.button:hover{background:var(--hover);border-color:var(--muted)}
+.button:active{transform:translateY(2px);box-shadow:inset 0 2px 3px #00000025,0 0 0 var(--shadow)}
+.button.primary{background:var(--primary);border-color:var(--primary-edge);color:var(--primary-ink);box-shadow:inset 0 1px 0 #ffffff21,0 2px 0 var(--shadow)}
+.button.primary:hover{filter:brightness(1.09)}
+.button.quiet{box-shadow:none;background:transparent;color:var(--muted)}
+button:focus-visible,label:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.nav{position:fixed;z-index:20;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:348px;max-width:calc(100% - 24px);margin:0;padding:6px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;border:1px solid #f1e7d80a;border-radius:25px;background:linear-gradient(145deg,#f1e7d814,#f1e7d803),#2b241fcc;-webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%);box-shadow:inset 0 1px 0 #fff6e50a,inset 0 -1px 0 #ffffff04,0 12px 36px #15110e66,0 2px 6px #15110e40}
+.nav .nav-today{--tab-color:var(--accent)}
+.nav .nav-sheet{--tab-color:var(--green)}
+.nav .nav-group{--tab-color:var(--red)}
+.nav label{min-width:0;min-height:52px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:6px;border:1px solid transparent;border-radius:19px;font-size:12px;font-weight:650;color:var(--ink);background:transparent;box-shadow:none;cursor:pointer;position:relative;user-select:none;transition:background .16s,transform .12s,box-shadow .16s}
+.nav svg{width:19px;height:19px;color:inherit}
+.nav label:hover{background:#f1e7d814}
+.nav label:active{transform:scale(.96);box-shadow:inset 0 2px 5px #15110e40}
+#today:checked~.app .nav-today,#sheet:checked~.app .nav-sheet,#group:checked~.app .nav-group{color:var(--tab-color);background:linear-gradient(145deg,#ffffff1c,#ffffff08);box-shadow:inset 0 1px 0 #fff6e538,0 0 0 1px var(--tab-color),0 3px 9px #15110e33}
+#light:checked~.app .nav{background:linear-gradient(145deg,#ffffff66,#ffffff11),#fffaf2cc;border-color:#8866380a;box-shadow:inset 0 1px 0 #ffffff33,0 12px 36px #79695733,0 2px 6px #79695720}
+#light:checked~.app .nav label:hover{background:#8866380d}
+#light:checked~.app .nav label{box-shadow:none}
+#light:checked~.app .nav-today,#light:checked~.app .nav-sheet,#light:checked~.app .nav-group{background-color:transparent}
+#light:checked~.app .nav label:active{transform:scale(.96)}
+#today:focus-visible~.app .nav-today,#sheet:focus-visible~.app .nav-sheet,#group:focus-visible~.app .nav-group,#light:focus-visible~.app .theme{outline:2px solid var(--accent);outline-offset:3px}
+main{max-width:1184px;margin:0 auto;padding:36px 32px}
+.panel{display:none}
+#today:checked~.app #today-panel,#sheet:checked~.app #sheet-panel,#group:checked~.app #group-panel{display:block}
+.page-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:28px}
+h1{font-size:28px;line-height:1.25;letter-spacing:-1px;margin:0 0 9px;font-weight:750}
+.subtitle{color:var(--muted);margin:0;font-size:13px;line-height:1.65}
+.date-control{display:flex;align-items:center;gap:6px}
+.date-control .arrow{width:34px;padding:7px}
+.date-control .date{min-width:162px}
+.workspace{border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden}
+.lesson-bar{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:23px 24px;border-bottom:1px solid var(--border)}
+.small-label{color:var(--muted);font-size:12px;margin-bottom:10px}
+.lessons{display:flex;gap:8px}
+.lesson{position:relative}
+.lesson input{position:absolute;opacity:0;width:1px;height:1px}
+.lesson label{width:48px;height:42px;padding:0;font-size:15px}
+.lesson input:checked+label{background:#51412b;border-color:#a68a58;color:#f0d49d;box-shadow:inset 0 1px 0 #ffffff12,0 2px 0 var(--shadow)}
+#light:checked~.app .lesson input:checked+label{background:#f2dfb4;color:#725126;border-color:#b99a61}
+.lesson input:focus-visible+label{outline:2px solid var(--accent);outline-offset:3px}
+.lesson-meta{text-align:right;font-size:12px;color:var(--muted);line-height:1.9}
+.lesson-meta strong{display:block;color:var(--ink);font-weight:600;font-size:13px}
+.toolbar{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.autosave{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:11px;white-space:nowrap}
+.autosave svg{width:15px;height:15px;color:var(--green)}
+.roster-caption{display:flex;align-items:center;justify-content:space-between;padding:4px 24px 14px;gap:14px}
+.roster-caption h2{font-size:14px;margin:0;font-weight:650}
+.roster-caption span{font-size:11px;color:var(--muted)}
+.roster{padding:0 24px 24px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 14px;counter-reset:absent}
+.student{position:relative;min-width:0}
+.student input{position:absolute;opacity:0;width:1px;height:1px}
+.student label{min-height:65px;border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);cursor:pointer;transition:border-color .15s,background .15s,transform .1s;user-select:none}
+.student label:hover{border-color:var(--muted)}
+.student label:active{transform:scale(.992)}
+.student input:checked+label{border-color:var(--red-border);background:var(--red-bg)}
+.student input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
+.student input:checked{counter-increment:absent}
+.number{font-size:11px;color:var(--muted);width:18px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.student-name{font-size:13px;font-weight:600;line-height:1.5}
+.attendance{margin-left:auto;display:flex;align-items:center;gap:7px;color:var(--green);font-size:11px;white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.no{display:none}
+.student input:checked+label .attendance{color:var(--red)}
+.student input:checked+label .yes{display:none}
+.student input:checked+label .no{display:inline}
+.student input:checked+label .dot{background:var(--red)}
+.roster-footer{grid-column:1/-1;margin:9px -24px -24px;padding:16px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:12px}
+.absent-count:after{content:counter(absent);font-weight:750;color:var(--red);margin-left:5px}
+.roster-footer .hint{color:var(--muted);font-size:11px}
+.bottom-note{display:flex;align-items:flex-start;gap:9px;color:var(--muted);font-size:11px;line-height:1.7;margin-top:18px}
+.bottom-note svg{width:15px;height:15px;margin-top:2px}
+.sheet-actions{display:flex;gap:9px;flex-wrap:wrap}
+.sheet-controls{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 20px;border-bottom:1px solid var(--border)}
+.sheet-controls p{font-size:12px;color:var(--muted);margin:0}
+.table-scroll{overflow:auto;max-height:590px;scrollbar-color:var(--border) var(--surface)}
+table{border-collapse:separate;border-spacing:0;min-width:1390px;width:100%;font-size:11px;font-variant-numeric:tabular-nums}
+th,td{height:39px;min-width:32px;padding:7px 5px;text-align:center;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface)}
+thead th{height:50px;color:var(--muted);font-weight:500;position:sticky;top:0;z-index:2;background:var(--raised)}
+th small{display:block;font-size:8px;margin-top:3px}
+th:first-child,td:first-child{position:sticky;left:0;min-width:36px;width:36px;z-index:1;color:var(--muted)}
+th:nth-child(2),td:nth-child(2){position:sticky;left:36px;min-width:185px;text-align:left;padding-left:13px;z-index:1;border-right:2px solid var(--border)}
+thead th:first-child,thead th:nth-child(2){z-index:4}
+th:last-child,td:last-child{min-width:64px;font-weight:700;border-right:0}
+td:empty:after{content:"·";color:var(--border)}
+td:nth-child(5),td:nth-child(6),td:nth-child(12),td:nth-child(13),td:nth-child(19),td:nth-child(20),td:nth-child(26),td:nth-child(27){background:var(--weekend)}
+th:nth-child(6),th:nth-child(7),th:nth-child(13),th:nth-child(14),th:nth-child(20),th:nth-child(21),th:nth-child(27),th:nth-child(28){background:var(--weekend)}
+/* Даты 4–5, 11–12, 18–19 и 25–26 октября — выходные. */
+td:nth-child(5),td:nth-child(12),td:nth-child(19),td:nth-child(26){background:var(--surface)}
+td:nth-child(6),td:nth-child(7),td:nth-child(13),td:nth-child(14),td:nth-child(20),td:nth-child(21),td:nth-child(27),td:nth-child(28){background:var(--weekend)}
+th:nth-child(16){color:var(--accent);box-shadow:inset 0 -2px var(--accent)}
+td:nth-child(16){background:#c5a36b14}
+td.hours{color:var(--red);font-weight:650}
+tbody tr:hover td{filter:brightness(1.1)}
+.table-footer{padding:15px 20px;display:flex;justify-content:space-between;gap:18px;color:var(--muted);font-size:11px}
+.legend{display:flex;align-items:center;gap:7px}
+.swatch{height:10px;width:10px;background:var(--weekend);border:1px solid var(--border);border-radius:2px}
+.settings-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px;align-items:start}
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
+h2{font-size:16px;letter-spacing:-.3px;margin:0 0 9px}
+.settings-section p{font-size:12px;color:var(--muted);line-height:1.75;margin:0 0 20px}
+.field-label{display:block;font-size:12px;font-weight:600;margin-bottom:8px}
+.text-field{width:100%;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);padding:10px 12px;margin-bottom:20px;box-shadow:inset 0 1px 3px #00000015}
+textarea.text-field{line-height:1.9;resize:vertical;min-height:292px}
+.field-help{color:var(--muted);font-size:11px;line-height:1.6;margin-top:-10px;margin-bottom:21px}
+.settings-section+.settings-section{margin-top:20px}
+.storage-info{display:flex;align-items:center;gap:8px;padding-top:18px;border-top:1px solid var(--border);margin-top:22px;font-size:11px;color:var(--muted)}
+#group-panel .settings-layout{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+#group-panel .group-editor{padding-bottom:0;overflow:hidden}
+#group-panel .group-name-field{max-width:240px}
+.group-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 10px}
+.group-list-heading .field-label{margin:0}
+.group-total{font-size:11px;font-weight:400;color:var(--muted);margin-left:8px}
+.group-list{list-style:none;padding:0;margin:0;counter-reset:group-student;border-top:1px solid var(--border)}
+.group-list li{counter-increment:group-student;display:flex;align-items:center;gap:12px;min-height:45px;border-bottom:1px solid var(--border)}
+.group-list li:before{content:counter(group-student,decimal-leading-zero);width:24px;flex-shrink:0;color:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
+.group-list input{min-width:0;flex:1;width:100%;padding:8px 0;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--ink);font-size:13px;line-height:1.5}
+.group-list input:hover{background:var(--bg)}
+.group-remove{flex-shrink:0;width:30px;height:30px;border:0;border-radius:5px;background:transparent;color:var(--muted);font-size:20px;transition:background .12s,transform .1s}
+.group-remove:hover{background:var(--red-bg);color:var(--red)}
+.group-remove:active{transform:scale(.92)}
+.group-bulk{margin:18px 0;color:var(--muted);font-size:12px}
+.group-bulk summary{cursor:pointer;width:fit-content;padding:5px 0;color:var(--accent)}
+.group-bulk summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.group-bulk p{margin:12px 0!important}
+#group-panel .group-bulk textarea{margin-bottom:0;font-size:13px}
+.group-save-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 -24px;padding:18px 24px;border-top:1px solid var(--border);background:var(--bg)}
+.group-save-bar small{max-width:205px;color:var(--muted);font-size:10px;line-height:1.6}
+#group-panel .group-note{margin-top:16px;margin-bottom:0;font-size:11px}
+@media(max-width:760px){#group-panel .settings-layout{grid-template-columns:minmax(0,1fr)}.group-save-bar{margin:0 -20px;padding:16px 20px;flex-wrap:wrap}.group-save-bar small{max-width:none}.group-list li{gap:8px;min-height:48px}.group-list-heading .button{padding:8px 10px;font-size:11px}.group-total{margin-left:4px}.group-remove{width:32px;height:32px}}
+@media(min-width:1400px){main{padding-top:42px}}
+@media(max-width:760px){
+.header{padding:15px 20px;gap:14px;min-height:68px}.brand{font-size:17px}.group-label{padding-left:14px;font-size:12px}.group-label span,.local{display:none}.header-right{gap:0}.nav{padding:6px;gap:5px}.nav label{font-size:12px;min-height:52px}
+main{padding:26px 16px}.page-heading{flex-direction:column;gap:18px;margin-bottom:21px}h1{font-size:25px}.subtitle{font-size:12px}.date-control{width:100%}.date-control .date{flex:1}
+.lesson-bar{padding:18px 16px;display:block}.lessons{gap:8px}.lesson{flex:1}.lesson label{width:100%;height:43px}.lesson-meta{display:flex;justify-content:space-between;text-align:left;margin-top:14px;line-height:1.5}.lesson-meta strong{font-size:11px}.lesson-meta span{font-size:11px}
+.toolbar{padding:16px;align-items:flex-start}.toolbar .actions{gap:10px}.toolbar .button{font-size:11px;padding:8px 10px}.autosave{display:none}.toolbar .button.quiet{padding-left:0}
+.roster-caption{padding:2px 16px 13px}.roster-caption span{font-size:10px}.roster{grid-template-columns:minmax(0,1fr);padding:0 12px 20px;gap:8px}.student label{min-height:64px;padding:12px 13px}.student-name{font-size:13px}.attendance{font-size:10px}.roster-footer{margin:8px -12px -20px;padding:16px;align-items:flex-start;flex-direction:column;gap:6px}.bottom-note{font-size:10px}
+.sheet-actions{width:100%}.sheet-actions .button{flex:1;font-size:11px}.sheet-controls{padding:15px 12px;align-items:flex-start;flex-direction:column;gap:12px}.sheet-controls .date-control{width:auto}.sheet-controls .date{min-width:174px}.table-footer{padding:13px;flex-direction:column;gap:8px}.settings-layout{grid-template-columns:minmax(0,1fr)}.settings-section{padding:20px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<input class="state" type="radio" name="screen" id="today">
+<input class="state" type="radio" name="screen" id="sheet">
+<input class="state" type="radio" name="screen" id="group" checked="">
+<input class="state" type="checkbox" id="light" aria-label="Светлая тема">
+<div class="app">
+<header class="topbar">
+<div class="header">
+<div class="brand"><span class="brandmark"><svg viewBox="0 0 32 34" aria-hidden="true"><rect x="6" y="4" width="23" height="27" rx="5"></rect><path d="M3 10h6M3 17h6M3 24h6M13 13l3 3 6-6M13 23h9"></path></svg></span>Журнал</div>
+<div class="group-label"><strong>ИС-23</strong><span> / Группа</span></div>
+<div class="header-right"><span class="local"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="3"></rect><path d="M10 17h4"></path></svg>На этом устройстве</span><label for="light" class="button theme" title="Переключить тему"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"></path></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"></path></svg></label></div>
+</div>
+<nav class="nav" aria-label="Разделы журнала">
+<label for="today" class="nav-today"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"></rect><path d="M8 3v4m8-4v4M4 11h16m-12 5 2 2 5-5"></path></svg>Отметки</label>
+<label for="sheet" class="nav-sheet"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M9 4v16m6-10v10"></path></svg>Ведомость</label>
+<label for="group" class="nav-group"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><path d="M3 20v-2a6 6 0 0 1 12 0v2m1-15a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v2"></path></svg>Группа</label>
+</nav>
+</header>
+<main>
+<section class="panel" id="today-panel" aria-label="Отметки">
+<div class="page-heading">
+<div><h1>Кто сегодня на паре?</h1><p class="subtitle">Отметьте отсутствующих. Часы в ведомости считаются автоматически.</p></div>
+<div class="date-control"><button type="button" class="button arrow" aria-label="Предыдущий день">‹</button><button type="button" class="button date"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"></rect><path d="M8 3v4m8-4v4M4 11h16"></path></svg>14 октября <span style="color:var(--muted);font-weight:400">· вт</span></button><button type="button" class="button arrow" aria-label="Следующий день">›</button></div>
+</div>
+<div class="workspace">
+<div class="lesson-bar">
+<div><div class="small-label">Номер пары</div><div class="lessons" aria-label="Выбор пары">
+<div class="lesson"><input type="radio" name="lesson" id="l1"><label class="button" for="l1">1</label></div>
+<div class="lesson"><input type="radio" name="lesson" id="l2" checked=""><label class="button" for="l2">2</label></div>
+<div class="lesson"><input type="radio" name="lesson" id="l3"><label class="button" for="l3">3</label></div>
+<div class="lesson"><input type="radio" name="lesson" id="l4"><label class="button" for="l4">4</label></div>
+<div class="lesson"><input type="radio" name="lesson" id="l5"><label class="button" for="l5">5</label></div>
+<div class="lesson"><input type="radio" name="lesson" id="l6"><label class="button" for="l6">6</label></div>
+</div></div>
+<div class="lesson-meta"><strong>Одна пара — 2 академических часа</strong><span>Отметки ведутся отдельно для каждой пары</span></div>
+</div>
+<div class="toolbar">
+<div class="actions"><button type="button" class="button"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Скопировать с 1-й пары</button><button type="button" class="button quiet">Очистить пару</button></div>
+<span class="autosave"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg>Все изменения сохранены</span>
+</div>
+<div class="roster-caption"><h2>Список группы <span style="margin-left:7px;font-weight:400">12 студентов</span></h2><span>Нажмите, если отсутствует</span></div>
+<div class="roster">
+<div class="student"><input type="checkbox" id="s1"><label for="s1"><span class="number">1</span><span class="student-name">Абрамова Алина</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s2"><label for="s2"><span class="number">2</span><span class="student-name">Белова Дарья</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s3" checked=""><label for="s3"><span class="number">3</span><span class="student-name">Васильев Артём</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s4"><label for="s4"><span class="number">4</span><span class="student-name">Волкова Мария</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s5"><label for="s5"><span class="number">5</span><span class="student-name">Громов Никита</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s6"><label for="s6"><span class="number">6</span><span class="student-name">Данилова Софья</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s7"><label for="s7"><span class="number">7</span><span class="student-name">Егорова Полина</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s8" checked=""><label for="s8"><span class="number">8</span><span class="student-name">Зайцев Максим</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s9"><label for="s9"><span class="number">9</span><span class="student-name">Иванова Анна</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s10"><label for="s10"><span class="number">10</span><span class="student-name">Козлов Илья</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s11"><label for="s11"><span class="number">11</span><span class="student-name">Лебедева Ева</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="student"><input type="checkbox" id="s12" checked=""><label for="s12"><span class="number">12</span><span class="student-name">Морозов Даниил</span><span class="attendance"><i class="dot"></i><span class="yes">На паре</span><span class="no">Нет на паре</span></span></label></div>
+<div class="roster-footer"><span class="absent-count">Отсутствуют на выбранной паре:</span><span class="hint">Повторное нажатие вернёт отметку «На паре»</span></div>
+</div>
+</div>
+<div class="bottom-note"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg><span>Без аккаунта и интернета. Данные хранятся в этом браузере — резервную копию можно сделать во вкладке «Группа».</span></div>
+</section>
+<section class="panel" id="sheet-panel" aria-label="Ведомость за месяц">
+<div class="page-heading"><div><h1>Ведомость пропусков</h1><p class="subtitle">Группа ИС-23 · Октябрь 2025 · Пропущенные академические часы</p></div><div class="sheet-actions"><button class="button" type="button"><svg viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7Z"></path></svg>Просмотр и печать</button><button class="button primary" type="button"><svg viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4"></path></svg>Скачать Excel</button></div></div>
+<div class="workspace">
+<div class="sheet-controls"><div class="date-control"><button type="button" class="button arrow" aria-label="Предыдущий месяц">‹</button><button type="button" class="button date">Октябрь 2025 <span style="color:var(--muted)">⌄</span></button><button type="button" class="button arrow" aria-label="Следующий месяц">›</button></div><p>12 студентов · 1 пропущенная пара = 2 часа</p></div>
+<div class="table-scroll" tabindex="0" aria-label="Ведомость, прокрутка по горизонтали">
+<table>
+<thead><tr><th>№</th><th>ФИО студента</th><th>1<small>ср</small></th><th>2<small>чт</small></th><th>3<small>пт</small></th><th>4<small>сб</small></th><th>5<small>вс</small></th><th>6<small>пн</small></th><th>7<small>вт</small></th><th>8<small>ср</small></th><th>9<small>чт</small></th><th>10<small>пт</small></th><th>11<small>сб</small></th><th>12<small>вс</small></th><th>13<small>пн</small></th><th>14<small>вт</small></th><th>15<small>ср</small></th><th>16<small>чт</small></th><th>17<small>пт</small></th><th>18<small>сб</small></th><th>19<small>вс</small></th><th>20<small>пн</small></th><th>21<small>вт</small></th><th>22<small>ср</small></th><th>23<small>чт</small></th><th>24<small>пт</small></th><th>25<small>сб</small></th><th>26<small>вс</small></th><th>27<small>пн</small></th><th>28<small>вт</small></th><th>29<small>ср</small></th><th>30<small>чт</small></th><th>31<small>пт</small></th><th>Всего<small>часов</small></th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Абрамова Алина</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>0</td></tr>
+<tr><td>2</td><td>Белова Дарья</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="hours">2</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>2</td></tr>
+<tr><td>3</td><td>Васильев Артём</td><td></td><td></td><td class="hours">4</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="hours">2</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>6</td></tr>
+<tr><td>4</td><td>Волкова Мария</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>0</td></tr>
+<tr><td>5</td><td>Громов Никита</td><td class="hours">2</td><td></td><td></td><td></td><td></td><td class="hours">4</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>6</td></tr>
+<tr><td>6</td><td>Данилова Софья</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>0</td></tr>
+<tr><td>7</td><td>Егорова Полина</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="hours">2</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>2</td></tr>
+<tr><td>8</td><td>Зайцев Максим</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="hours">2</td><td class="hours">4</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>6</td></tr>
+<tr><td>9</td><td>Иванова Анна</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>0</td></tr>
+<tr><td>10</td><td>Козлов Илья</td><td></td><td class="hours">2</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>2</td></tr>
+<tr><td>11</td><td>Лебедева Ева</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>0</td></tr>
+<tr><td>12</td><td>Морозов Даниил</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="hours">2</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>2</td></tr>
+</tbody>
+</table>
+</div>
+<div class="table-footer"><span class="legend"><i class="swatch"></i>Выходные дни</span><span>Прокручивайте дни вправо — фамилии остаются на месте</span></div>
+</div>
+<div class="bottom-note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6m0-10v.1"></path></svg><span>В Excel — полный месяц, границы ячеек и итоговые часы по каждому студенту. Пустая ячейка означает отсутствие отмеченных пропусков.</span></div>
+</section>
+<section class="panel" id="group-panel" aria-label="Настройки группы">
+<div class="page-heading"><div><h1>Группа ИС-23</h1><p class="subtitle">Состав группы, название и резервная копия — всё в одном месте.</p></div></div>
+<div class="settings-layout">
+<section class="settings-section group-editor"><h2>Состав группы</h2><p>Исправьте имя прямо в строке или введите весь список целиком.</p>
+<label for="group-name" class="field-label">Название группы</label><input id="group-name" class="text-field group-name-field" value="ИС-23">
+<div class="group-list-heading"><div class="field-label">Студенты <span class="group-total">12 человек</span></div><button class="button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Добавить</button></div>
+<ol class="group-list" aria-label="Редактирование состава группы">
+<li><input value="Абрамова Алина" aria-label="Имя студента 1"><button class="group-remove" type="button" aria-label="Удалить Абрамову Алину">×</button></li>
+<li><input value="Белова Дарья" aria-label="Имя студента 2"><button class="group-remove" type="button" aria-label="Удалить Белову Дарью">×</button></li>
+<li><input value="Васильев Артём" aria-label="Имя студента 3"><button class="group-remove" type="button" aria-label="Удалить Васильева Артёма">×</button></li>
+<li><input value="Волкова Мария" aria-label="Имя студента 4"><button class="group-remove" type="button" aria-label="Удалить Волкову Марию">×</button></li>
+<li><input value="Громов Никита" aria-label="Имя студента 5"><button class="group-remove" type="button" aria-label="Удалить Громова Никиту">×</button></li>
+<li><input value="Данилова Софья" aria-label="Имя студента 6"><button class="group-remove" type="button" aria-label="Удалить Данилову Софью">×</button></li>
+<li><input value="Егорова Полина" aria-label="Имя студента 7"><button class="group-remove" type="button" aria-label="Удалить Егорову Полину">×</button></li>
+<li><input value="Зайцев Максим" aria-label="Имя студента 8"><button class="group-remove" type="button" aria-label="Удалить Зайцева Максима">×</button></li>
+<li><input value="Иванова Анна" aria-label="Имя студента 9"><button class="group-remove" type="button" aria-label="Удалить Иванову Анну">×</button></li>
+<li><input value="Козлов Илья" aria-label="Имя студента 10"><button class="group-remove" type="button" aria-label="Удалить Козлова Илью">×</button></li>
+<li><input value="Лебедева Ева" aria-label="Имя студента 11"><button class="group-remove" type="button" aria-label="Удалить Лебедеву Еву">×</button></li>
+<li><input value="Морозов Даниил" aria-label="Имя студента 12"><button class="group-remove" type="button" aria-label="Удалить Морозова Даниила">×</button></li>
+</ol>
+<details class="group-bulk"><summary>Ввести список целиком</summary><p>Каждый студент — с новой строки, без номеров. Этот список заменит текущий состав после сохранения.</p><label for="students" class="field-label">Фамилии и имена</label>
+<textarea id="students" class="text-field" spellcheck="false">Абрамова Алина
+Белова Дарья
+Васильев Артём
+Волкова Мария
+Громов Никита
+Данилова Софья
+Егорова Полина
+Зайцев Максим
+Иванова Анна
+Козлов Илья
+Лебедева Ева
+Морозов Даниил</textarea>
+</details>
+<div class="group-save-bar"><small>При сохранении список сортируется по алфавиту.</small>
+<button class="button primary" type="button">Сохранить изменения</button></div>
+</section>
+<div>
+<section class="settings-section"><h2>Резервная копия</h2><p>Скачайте все отметки и список группы одним файлом. Копия пригодится при смене телефона или очистке браузера.</p><div class="actions"><button class="button" type="button"><svg viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4"></path></svg>Скачать копию</button><button class="button" type="button">Восстановить из файла</button></div><p class="group-note">Перед изменением состава группы скачайте копию, чтобы сохранить прежний список и историю отметок.</p><div class="storage-info"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="3"></rect><path d="M10 17h4"></path></svg>Данные хранятся только на этом устройстве</div></section>
+<section class="settings-section"><h2>Журнал под рукой</h2><p style="margin-bottom:0">На iPhone откройте журнал в Safari, нажмите «Поделиться» и выберите «На экран “Домой”». Он будет открываться с отдельной иконки, без лишних вкладок.</p></section>
+</div>
+</div>
+</section>
+</main>
+</div>
+
+</body></html>

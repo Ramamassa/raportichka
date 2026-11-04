@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import ExcelJS from 'exceljs';
+import { initialState, setAbsence } from '../model.js';
+import { createAttendanceWorkbook } from '../excel.js';
+
+test('downloaded workbook matches form: 31 days, totals, empty justified column and signatures', async () => {
+  const state = initialState();
+  setAbsence(state, '2026-02-02', 1, state.students[0].id, true);
+  setAbsence(state, '2026-02-02', 2, state.students[0].id, true);
+  const generated = createAttendanceWorkbook(ExcelJS, state, '2026-02');
+  const loaded = new ExcelJS.Workbook();
+  await loaded.xlsx.load(await generated.xlsx.writeBuffer());
+  const sheet = loaded.getWorksheet('Ведомость');
+  assert.equal(sheet.columnCount, 36);
+  assert.match(sheet.getCell('A1').value, /Ведомость посещаемости группы ИС-23 за февраль 2026г\./);
+  assert.deepEqual(sheet.getRow(2).values.slice(1), ['№', 'ФИО обучающегося', ...Array.from({length:31},(_,i)=>i+1), 'Всего', 'Уваж.', 'Н/уваж.']);
+  assert.equal(sheet.getCell('D3').value, 4);
+  assert.equal(sheet.getCell('AH3').value, 4);
+  assert.equal(sheet.getCell('AJ3').value, 4);
+  assert.equal(sheet.getCell('C3').value, null);
+  assert.equal(sheet.getCell('AH4').value, 0);
+  assert.equal(sheet.getCell('AJ4').value, 0);
+  for(let r=3;r<=state.students.length+3;r++) assert.equal(sheet.getCell(r,35).value, null);
+  assert.equal(sheet.getCell('AG3').value, null);
+  assert.equal(sheet.getCell(state.students.length+3,34).value, 4);
+  assert.match(sheet.getCell(state.students.length+5,1).value, /Староста.*Кл\. руководитель.*Зав\. По ВР/);
+  assert.equal(sheet.pageSetup.orientation, 'landscape');
+  assert.equal(sheet.getCell('AJ4').border.right.style, 'thin');
+});

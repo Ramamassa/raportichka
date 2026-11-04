@@ -1,0 +1,19 @@
+{
+  "name": "group-journal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test",
+    "start": "node scripts/serve.mjs",
+    "setup-webhook": "node scripts/setup-webhook.mjs"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@ngrok/ngrok": "1.7.0",
+    "exceljs": "4.4.0"
+  }
+}
