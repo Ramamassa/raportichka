@@ -10,9 +10,24 @@ export function _resetMemoryStorage(state = null, revision = 0) {
   memRevision = revision;
 }
 
+function getRedisCredentials() {
+  const url = process.env.KV_REST_API_URL ||
+              process.env.UPSTASH_REDIS_REST_URL ||
+              process.env.STORAGE_REST_API_URL ||
+              process.env.STORAGE_KV_REST_API_URL ||
+              process.env.STORAGE_URL;
+
+  const token = process.env.KV_REST_API_TOKEN ||
+                process.env.UPSTASH_REDIS_REST_TOKEN ||
+                process.env.STORAGE_REST_API_TOKEN ||
+                process.env.STORAGE_KV_REST_API_TOKEN ||
+                process.env.STORAGE_TOKEN;
+
+  return { url, token };
+}
+
 export async function getState() {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  const { url, token } = getRedisCredentials();
 
   if (url && token) {
     return getRedisState(url, token);
@@ -39,8 +54,7 @@ export async function getState() {
 }
 
 export async function saveState(nextState, expectedRevision) {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  const { url, token } = getRedisCredentials();
 
   if (url && token) {
     return saveRedisState(url, token, nextState, expectedRevision);
