@@ -26,9 +26,11 @@ git add .
 git commit -m "Рапортичка Mini App для Vercel"
 git branch -M main
 git remote add origin https://github.com/ВАШ_ЛОГИН/raportichka.git
-git push -u origin main
+git push -u origin main --force
 ```
-*(Папка `.journal-runtime` и секреты автоматически игнорируются благодаря `.gitignore`)*.
+*(Флаг `--force` необходим, чтобы перезаписать начальный пустой коммит/README, который GitHub автоматически создаёт при регистрации нового репозитория)*.
+
+Также в папке есть готовый файл **`Push-To-GitHub.cmd`** — можно просто запустить его для отправки файлов.
 
 ---
 
