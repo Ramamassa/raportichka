@@ -1,7 +1,7 @@
-import { verifyTelegram } from '../scripts/telegram-auth.mjs';
 import { validateState } from '../model.js';
 import { getState, saveState } from './_storage.js';
 import { getBody, sendJson } from './_http.js';
+import { isAuthorized } from './_auth.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -16,19 +16,11 @@ export default async function handler(req, res) {
     return;
   }
 
-  const token = process.env.BOT_TOKEN;
-  const ownerId = process.env.OWNER_ID;
-
-  // Authorization check
-  const initData = req.headers?.['x-telegram-init-data'];
-  try {
-    if (!token || !ownerId) {
-      throw new Error('Credentials not configured');
-    }
-    verifyTelegram(initData, token, ownerId);
-  } catch {
+  // Check authentication (Telegram or Web PIN)
+  const auth = isAuthorized(req);
+  if (!auth.ok) {
     return sendJson(res, 401, {
-      error: 'Откройте приложение заново через своего бота. Доступ разрешён только владельцу.'
+      error: 'Доступ закрыт. Откройте приложение через своего бота в Telegram или введите пароль старосты.'
     });
   }
 

@@ -196,9 +196,37 @@ test('API /api/state: Auth, validation, revision conflict, and atomic updates', 
     const res7 = createMockRes();
     await stateHandler(req7, res7);
     assert.equal(res7.getStatusCode(), 204);
+
+    // 8. Safari / Web PIN auth
+    process.env.OWNER_PIN = '438291';
+
+    // Wrong PIN fails
+    const reqPinBad = { method: 'GET', headers: { 'x-owner-pin': '000000' } };
+    const resPinBad = createMockRes();
+    await stateHandler(reqPinBad, resPinBad);
+    assert.equal(resPinBad.getStatusCode(), 401);
+
+    // Correct PIN GET succeeds
+    const reqPinOk = { method: 'GET', headers: { 'x-owner-pin': '438291' } };
+    const resPinOk = createMockRes();
+    await stateHandler(reqPinOk, resPinOk);
+    assert.equal(resPinOk.getStatusCode(), 200);
+    assert.equal(resPinOk.getBody().revision, 1);
+
+    // Correct PIN PUT succeeds
+    const reqPinPut = {
+      method: 'PUT',
+      headers: { 'x-owner-pin': '438291' },
+      body: JSON.stringify({ state, revision: 1 })
+    };
+    const resPinPut = createMockRes();
+    await stateHandler(reqPinPut, resPinPut);
+    assert.equal(resPinPut.getStatusCode(), 200);
+    assert.equal(resPinPut.getBody().revision, 2);
   } finally {
     delete process.env.BOT_TOKEN;
     delete process.env.OWNER_ID;
+    delete process.env.OWNER_PIN;
   }
 });
 
