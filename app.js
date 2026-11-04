@@ -9,19 +9,42 @@ let studentQuery = '';
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state = initialState(), storageError = '', date = dateKey(), month = date.slice(0,7), lesson = 1, draft = [];
+
+// 1. Всегда сначала мгновенно восстанавливаем данные из памяти телефона (Safari)
 try {
- const remote=await loadTelegramState();
- if(remote)state=validateState(remote);
- else { const saved=localStorage.getItem(KEY);if(saved)state=validateState(JSON.parse(saved)); }
-} catch(error) {
- const gate=document.createElement('div');gate.className='notice error';
- gate.textContent=error.message+' Если сервер недоступен, проверьте подключение к интернету и откройте приложение заново.';
- const retry=document.createElement('button');retry.className='button';retry.textContent='Повторить';retry.onclick=()=>location.reload();gate.append(retry);
- document.querySelector('main').replaceChildren(gate);document.querySelector('.nav').hidden=true;
- return;
+ const saved = localStorage.getItem(KEY);
+ if (saved) state = validateState(JSON.parse(saved));
+} catch {
+ storageError = 'Не удалось прочитать локальные данные браузера.';
 }
+
+// 2. Синхронизируем с облаком, но НИКОГДА не затираем реальные отметки пустым демо-списком
+try {
+ const remote = await loadTelegramState();
+ if (remote) {
+  const isLocalReal = !state.demo || (state.marks && Object.keys(state.marks).length > 0);
+  const isRemoteReal = !remote.demo || (remote.marks && Object.keys(remote.marks).length > 0);
+  if (isRemoteReal || !isLocalReal) {
+   state = validateState(remote);
+   localStorage.setItem(KEY, JSON.stringify(state));
+  } else if (isLocalReal && !isRemoteReal) {
+   // Если на телефоне уже есть отметки, а облако пустое — загружаем данные с телефона в облако
+   queueTelegramSave(state);
+  }
+ }
+} catch(error) {
+ if (telegramActive) {
+  const gate=document.createElement('div');gate.className='notice error';
+  gate.textContent=error.message+' Если сервер недоступен, проверьте подключение к интернету и откройте приложение заново.';
+  const retry=document.createElement('button');retry.className='button';retry.textContent='Повторить';retry.onclick=()=>location.reload();gate.append(retry);
+  document.querySelector('main').replaceChildren(gate);document.querySelector('.nav').hidden=true;
+  return;
+ }
+ console.warn('Синхронизация с сервером не удалась, работаем локально на телефоне:', error);
+}
+
 if(!telegramActive && $('.local')) $('.local').textContent='Веб-версия';
-let syncText=(telegramActive || localStorage.getItem('raportichka_pin'))?'Сохранено в облаке':'Локальный просмотр';
+let syncText=telegramActive?'Сохранено в облаке':'Сохранено на устройстве';
 onSyncStatus((text,error)=>{syncText=text;document.querySelectorAll('.autosave').forEach(el=>el.textContent=text);$('#sync-state').textContent=text;$('#retry-sync').hidden=!error;if(error)notify(text,true);});
 let storageLocked = !!storageError;
 function notify(text,error=false){ const el=$('#notice'); el.className='notice'+(error?' error':''); el.textContent=text; }
