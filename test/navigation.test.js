@@ -74,9 +74,10 @@ test('pointer drag commits once, cancellation restores selection, keyboard and c
     listeners.pointerdown(pointer(60, buttons[0]));
     assert.equal(indicator.style.transform, before);
     listeners.pointermove(pointer(170, buttons[0]));
-    assert.equal(indicator.style.transform, 'translate3d(229px,0,0)');
+    assert.equal(indicator.style.transform, 'translate3d(119px,0,0)');
     listeners.pointerup(pointer(170, buttons[0]));
-    assert.equal(calls.at(-1), 'group');
+    assert.equal(calls.at(-1), 'sheet');
+    controller.sync('group', false);
     // Losing the nav's own capture really does cancel and snap back.
     listeners.pointerdown(pointer(280, buttons[2]));
     listeners.pointermove(pointer(115, buttons[2]));
@@ -107,6 +108,15 @@ test('pointer drag commits once, cancellation restores selection, keyboard and c
     assert.notEqual(indicator.style.transform, 'translate3d(229px,0,0)');
     frames.findLast(callback => callback)(started + 300);
     assert.equal(indicator.style.transform, 'translate3d(229px,0,0)');
+    // Start dragging the newly selected tab before its tap animation has run.
+    controller.sync('today', false);
+    listeners.pointerdown(pointer(170, buttons[1]));
+    listeners.pointerup(pointer(170, buttons[1]));
+    listeners.pointerdown(pointer(170, buttons[1]));
+    listeners.pointermove(pointer(225, buttons[1]));
+    assert.equal(indicator.style.transform, 'translate3d(174px,0,0)');
+    listeners.pointerup(pointer(280, buttons[1]));
+    assert.equal(calls.at(-1), 'group');
   } finally {
     for (const [key, value] of Object.entries(originals)) {
       if (value === undefined) delete globalThis[key]; else globalThis[key] = value;

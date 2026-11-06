@@ -2,12 +2,6 @@
 @media(max-width:760px){.header{gap:12px}.header .group-label{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.roster-caption{align-items:flex-start}.roster-caption h2{line-height:1.5}.roster-caption>span{max-width:110px;text-align:right}.toolbar{flex-wrap:wrap}.settings-section .actions .button{flex:1}.sheet-table{min-width:1390px}.sheet-table th:nth-child(2),.sheet-table td:nth-child(2){min-width:148px;max-width:148px;white-space:normal}.page-heading{gap:16px}.student label{min-height:64px}.group-save-bar .button{width:100%}.subtitle{max-width:55ch}}
 .roster-search{padding:0 24px 16px}.roster-search .field-label{display:block;margin-bottom:6px;font-size:11px;font-weight:400;color:var(--muted)}.search-controls{position:relative;width:60%;max-width:420px}.search-controls input{display:block;min-width:0;width:100%;min-height:44px;margin:0;padding:10px 44px 10px 14px;border-radius:16px;background:transparent;box-shadow:none;font:inherit;font-size:16px;border-color:var(--border);transition:background .18s ease-out}.search-controls input::placeholder{color:var(--muted);opacity:1}.search-controls input:focus{background:var(--bg)}.search-controls input::-webkit-search-cancel-button{-webkit-appearance:none}.search-controls #reset-search{position:absolute;right:0;top:0;width:44px;height:44px;display:grid;place-items:center;padding:12px;border:0;border-radius:16px;background:transparent;color:var(--muted);box-shadow:none;cursor:pointer}.search-controls #reset-search svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}.search-controls #reset-search:hover{color:var(--ink)}.search-controls #reset-search:active{background:var(--hover)}.toolbar #clear{justify-content:center;text-align:center;padding:8px 13px;white-space:normal;overflow-wrap:normal;flex-shrink:0;line-height:1.4}.roster-search p{color:var(--muted);font-size:13px;margin:8px 0 0;line-height:1.5}.roster-search p:empty{display:none}@media(max-width:760px){.roster-search{padding:0 16px 16px}}
 .sheet-table td.summary-column:empty::after{content:none}.sheet-table .summary-column{min-width:64px;text-align:center;font-weight:600}.sheet-table tfoot th,.sheet-table tfoot td{background:var(--raised);border-top:1px solid var(--border);height:40px}.sheet-table tfoot th{text-align:left;padding-left:16px;position:static}.sheet-table tfoot td{position:static}@media print{.sheet-table .summary-column{width:36px;min-width:0}}
-/* Telegram viewport insets supplement browser safe areas without changing the design. */
-.app{padding-top:var(--tg-top,0px)}
-.sync-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-bottom:20px;line-height:1.6}
-.app>.nav{bottom:max(4px,env(safe-area-inset-bottom,0px),var(--tg-bottom,0px))!important}
-.back-top{bottom:calc(max(4px,env(safe-area-inset-bottom,0px),var(--tg-bottom,0px)) + 78px)!important}
-@media print{.sync-banner{display:none}}
 /* Keep application navigation independent of the reference stylesheet and header. */
 .app{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
 .app>.nav{--nav-palette:#dec18b #afbd96 #e0aa95;position:fixed;z-index:20;inset:auto auto max(4px,env(safe-area-inset-bottom,0px)) 50%;transform:translateX(-50%);width:348px;max-width:calc(100% - 24px);margin:0;padding:6px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;border:1px solid #f1e7d80a;border-radius:25px;background:linear-gradient(145deg,#f1e7d80c,#f1e7d802),#2b241f40;-webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%);box-shadow:inset 0 1px 0 #fff6e50a,0 8px 24px #15110e55;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;isolation:isolate}
@@ -29,13 +23,10 @@
 @media print{.app>.nav{display:none!important}}
 @media print{@page{size:A4 landscape;margin:8mm}:root{color-scheme:light}body,.app{background:white!important;color:black!important;padding:0!important}.topbar,#notice,#today-panel,#group-panel,.sheet-actions,.sheet-controls,.table-footer,.bottom-note,dialog{display:none!important}#sheet-panel{display:block!important}main{max-width:none;padding:0}.page-heading{margin-bottom:12px}h1{font-size:18px}.subtitle{color:#333}.workspace{border:1px solid #999}.table-scroll{overflow:visible;max-height:none}.sheet-table{min-width:0;font-size:8px;width:100%;table-layout:fixed}.sheet-table th,.sheet-table td{min-width:0!important;height:24px;background:white!important;color:black!important;position:static!important;padding:2px;border-color:#aaa}.sheet-table th:first-child,.sheet-table td:first-child{width:20px}.sheet-table th:nth-child(2),.sheet-table td:nth-child(2){width:110px;padding:3px}.sheet-table th:last-child,.sheet-table td:last-child{width:36px}.cell-button{min-width:0;height:auto;font-size:8px}.sheet-table .weekend{background:#eee!important;print-color-adjust:exact}tr{break-inside:avoid}}
 
-.pin-dialog{max-width:380px;border-radius:18px;text-align:center}
-.pin-dialog h2{margin:0 0 8px;font-family:Georgia,serif;font-size:20px}
-.pin-dialog .subtitle{margin:0 0 16px;font-size:13px;line-height:1.5;color:var(--muted)}
-.pin-field-wrap{margin-bottom:12px}
-.pin-field-wrap input{width:100%;box-sizing:border-box;text-align:center;font-size:22px;letter-spacing:4px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-family:inherit}
-.pin-field-wrap input:focus{outline:2px solid var(--accent);outline-offset:0}
-.pin-error{color:var(--red,#e57373);font-size:13px;margin:0 0 12px;min-height:16px;line-height:1.4}
-.pin-error:empty{display:none}
-.pin-dialog .actions{display:flex;justify-content:center;gap:10px}
-.pin-dialog .button{min-width:140px;padding:10px 24px}
+.student label{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
+.student .late-status{display:none}
+.student.is-late label{background:var(--hover);border-color:var(--accent)}
+.student.is-late .attendance{color:var(--accent)}
+.student.is-late .attendance .dot{background:var(--accent)}
+.student.is-late .attendance .yes,.student.is-late .attendance .no{display:none}
+.student.is-late .attendance .late-status{display:inline}

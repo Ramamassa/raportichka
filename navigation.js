@@ -64,10 +64,11 @@ export function setupNavigation(nav, navigate) {
     const button = event.target.closest('[data-screen]');
     if (!event.isPrimary || event.button !== 0 || !buttons.includes(button) || drag) return;
     const boxes = buttons.map(button => button.getBoundingClientRect());
-    const lower = Math.floor(position), upper = Math.min(lower + 1, buttons.length - 1);
     const centre = index => boxes[index].left + boxes[index].width / 2;
-    const lensCentre = centre(lower) + (centre(upper) - centre(lower)) * (position - lower);
-    drag = { button: buttons.indexOf(button), id: event.pointerId, startX: event.clientX, startY: event.clientY, offset: event.clientX - lensCentre, moved: false };
+    // Anchor to the pressed tab, not a lens still travelling from the previous tap.
+    // Otherwise its old position introduces a full-tab offset into the first drag.
+    cancelAnimationFrame(frame);
+    drag = { button: buttons.indexOf(button), id: event.pointerId, startX: event.clientX, startY: event.clientY, offset: event.clientX - centre(buttons.indexOf(button)), moved: false };
     // Touch pointers are implicitly captured by the pressed child (often an SVG).
     // Transfer capture before movement; its bubbling lostpointercapture must not cancel us.
     if (event.pointerType === 'touch' || event.pointerType === 'pen') nav.setPointerCapture(event.pointerId);
